@@ -14,8 +14,17 @@ pub enum DatabaseError {
     Unknown,
 }
 
+#[derive(Debug, Error)]
+pub enum ApiError {
+    #[error("not found")]
+    NotFound,
+    #[error("unauthorized")]
+    Unauthorized,
+}
+
 #[tokio::main]
 async fn main() {
+    // TODO: tracing subscriber init
     // TODO: return error rather than unwrapping
     let pool = create_pool("host=localhost user=postgres dbname=postgres").unwrap();
     let app = Router::new().route("/", get(test_pool)).with_state(pool);
@@ -49,6 +58,7 @@ async fn test_pool(State(pool): State<Pool>) -> Result<String, (StatusCode, Stri
         .query_one("select 1 + 1", &[])
         .await
         .map_err(internal_error)?;
+    // TODO: add a FromRow trait and implement it using macro for structs
     let two: i32 = row.try_get(0).map_err(internal_error)?;
 
     Ok(two.to_string())
